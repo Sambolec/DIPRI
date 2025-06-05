@@ -35,8 +35,22 @@ public class CharacterHealth : MonoBehaviour
 
     void Die()
     {
+        // Trigger death animation
         if (animator != null)
             animator.SetTrigger("isDead");
-        // Optionally disable movement, attacks, etc.
+
+        // Disable movement
+        PlayerMovement playerMovement = GetComponent<PlayerMovement>();
+        if (playerMovement != null)
+            playerMovement.canMove = false;
+
+        // Stop physics-based movement
+        CharacterController controller = GetComponent<CharacterController>();
+        if (controller != null)
+            controller.enabled = false;
+
+        // Optional: Disable attacks/colliders
+        // GetComponent<Collider>().enabled = false;
+        // GetComponent<PlayerAttack>().enabled = false;
     }
 }

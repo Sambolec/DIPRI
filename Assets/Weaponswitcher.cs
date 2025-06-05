@@ -10,12 +10,14 @@ public class Weaponswitcher : MonoBehaviour
 
     void Start()
     {
+        // Start with pistol character active
         swordCharacter.SetActive(false);
         pistolCharacter.SetActive(true);
-        activeCharacter = pistolCharacter;
-        
-        // Ensure only gun camera is tagged MainCamera at start
+        pistolCharacter.tag = "Player";
+        swordCharacter.tag = "Untagged";
         SetMainCamera(pistolCharacter);
+
+        activeCharacter = pistolCharacter;
     }
 
     void Update()
@@ -23,12 +25,10 @@ public class Weaponswitcher : MonoBehaviour
         if (Keyboard.current.digit1Key.wasPressedThisFrame)
         {
             SwitchTo(swordCharacter);
-            SetMainCamera(swordCharacter);
         }
         if (Keyboard.current.digit2Key.wasPressedThisFrame)
         {
             SwitchTo(pistolCharacter);
-            SetMainCamera(pistolCharacter);
         }
     }
 
@@ -36,17 +36,27 @@ public class Weaponswitcher : MonoBehaviour
     {
         if (activeCharacter == newCharacter) return;
 
+        // Move new character to old character's position and rotation
         newCharacter.transform.position = activeCharacter.transform.position;
         newCharacter.transform.rotation = activeCharacter.transform.rotation;
 
+        // Untag the old character and deactivate
+        activeCharacter.tag = "Untagged";
         activeCharacter.SetActive(false);
+
+        // Activate and tag the new character
         newCharacter.SetActive(true);
+        newCharacter.tag = "Player";
+
+        // Switch camera tag and enable only the new character's camera
+        SetMainCamera(newCharacter);
+
         activeCharacter = newCharacter;
     }
 
     void SetMainCamera(GameObject character)
     {
-        // First, untag ALL cameras in the scene
+        // Untag and disable all cameras in the scene
         Camera[] allCameras = FindObjectsOfType<Camera>();
         foreach (Camera cam in allCameras)
         {
@@ -54,17 +64,16 @@ public class Weaponswitcher : MonoBehaviour
             cam.enabled = false;
         }
 
-        // Then, find and enable only the active character's camera
-        Camera characterCamera = character.GetComponentInChildren<Camera>();
+        // Find and enable the camera under the new character, tag as MainCamera
+        Camera characterCamera = character.GetComponentInChildren<Camera>(true);
         if (characterCamera != null)
         {
             characterCamera.tag = "MainCamera";
             characterCamera.enabled = true;
-            Debug.Log($"Set {characterCamera.name} as MainCamera");
         }
         else
         {
-            Debug.LogError($"No camera found for {character.name}!");
+            Debug.LogWarning($"No camera found for {character.name}");
         }
     }
 }

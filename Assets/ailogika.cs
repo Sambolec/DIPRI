@@ -31,13 +31,18 @@ public class ailogika : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
-        
-        if (player == null)
-            player = GameObject.FindGameObjectWithTag("Player").transform;
     }
 
     void Update()
     {
+        // Always check for the current player (handles character switching)
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+                player = playerObj.transform;
+        }
+
         bool playerInSight = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
         bool playerInAttack = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
 
@@ -53,18 +58,47 @@ public class ailogika : MonoBehaviour
         {
             Patrol();
         }
+
+        // FIXED: Sync animations with actual agent movement
+        UpdateAnimations();
+    }
+
+    void UpdateAnimations()
+    {
+        if (animator == null || agent == null) return;
+
+        // Check if agent is actually moving
+        bool isMoving = agent.velocity.magnitude > 0.1f && agent.remainingDistance > agent.stoppingDistance;
+        float speed = agent.velocity.magnitude;
+
+        // Only set walking/running if actually moving
+        if (isMoving)
+        {
+            // If moving fast (chasing), set running. If slow (patrolling), set walking
+            if (speed > patrolSpeed + 0.5f)
+            {
+                animator.SetBool("isWalking", false);
+                animator.SetBool("isRunning", true);
+            }
+            else
+            {
+                animator.SetBool("isWalking", true);
+                animator.SetBool("isRunning", false);
+            }
+        }
+        else
+        {
+            // Not moving - idle state
+            animator.SetBool("isWalking", false);
+            animator.SetBool("isRunning", false);
+        }
     }
 
     void Patrol()
     {
-        animator.SetBool("isWalking", true);
-        animator.SetBool("isRunning", false);
-        animator.SetBool("isAttacking", false);
-        
         if (patrolPoints == null || patrolPoints.Length == 0)
         {
             agent.isStopped = true;
-            animator.SetBool("isWalking", false);
             return;
         }
         
@@ -84,9 +118,7 @@ public class ailogika : MonoBehaviour
 
     void ChasePlayer()
     {
-        animator.SetBool("isWalking", false);
-        animator.SetBool("isRunning", true);
-        animator.SetBool("isAttacking", false);
+        if (player == null) return;
         
         agent.speed = chaseSpeed;
         agent.isStopped = false;
@@ -95,17 +127,17 @@ public class ailogika : MonoBehaviour
 
     void AttackPlayer()
     {
+        if (player == null) return;
+        
         agent.isStopped = true;
         animator.SetBool("isWalking", false);
         animator.SetBool("isRunning", false);
 
-        // Only trigger attack if not already attacking or resetting
         if (!animator.GetBool("isAttacking") && !isResettingAttack && Time.time - lastAttackTime >= attackCooldown)
         {
             animator.SetBool("isAttacking", true);
 
-            // Looks for the player's "Health" script (not "healthai")
-            if (player.TryGetComponent(out Health playerHealth))
+            if (player.TryGetComponent(out CharacterHealth playerHealth))
             {
                 playerHealth.TakeDamage(attackDamage);
                 Debug.Log($"Dealt {attackDamage} damage to player!");
@@ -118,7 +150,6 @@ public class ailogika : MonoBehaviour
     IEnumerator ResetAttackState()
     {
         isResettingAttack = true;
-        // Wait for most of the cooldown (adjust to match your attack animation length)
         yield return new WaitForSeconds(attackCooldown * 0.8f);
         animator.SetBool("isAttacking", false);
         isResettingAttack = false;
