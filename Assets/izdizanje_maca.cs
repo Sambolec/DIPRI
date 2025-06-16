@@ -1,32 +1,52 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 public class izdizanje_maca : MonoBehaviour
 {
     [Header("Player Detection")]
-    public GameObject player;              // Povuci Player objekt
+    public GameObject player;
 
     [Header("Mac Movement")]
-    public GameObject sword;               // Povuci Mac objekt
-    public float swordMoveAmount = 0.3f;   // Za koliko se mac pomakne po kliku (Y osi)
+    public GameObject sword;
+    public float swordMoveAmount = 0.3f;
+    public float swordMoveSpeed = 2f;
+    public float bottomY = 0f;
 
     [Header("Click Settings")]
-    public int requiredClicks = 5;         // Koliko puta treba kliknuti Use button
+    public int requiredClicks = 5;
+    public bool resetClicksOnExit = true;
 
     [Header("UI Elements")]
-    public GameObject interactionText;     // Povuci UI tekst iz Canvasa (npr. "Pritisni E")
-    public GameObject rewardCanvas;        // Povuci Canvas koji se prikazuje na kraju
-    public float canvasDisplayDuration = 3f; // Koliko sekundi canvas ostaje prikazan
+    public GameObject interactionText;
+    public GameObject rewardCanvas;
+    public float canvasDisplayDuration = 3f;
+
+    [Header("Vrijeme za povratak dolje")]
+    public float resetDelay = 1.5f;
+
+    [Header("Vrata")]
+    public GameObject doorToOpen;
+    public float doorRotationAmount = 90f;
+    public float doorRotationSpeed = 2f;
 
     // Privatne varijable
     private bool playerInRange = false;
     private int currentClicks = 0;
     private bool completed = false;
+    private float lastUseTime = 0f;
+    private bool isSwordUp = false;
+    private float originalY;
 
     void Start()
     {
-        // Sakrij sve na početku
-        if (interactionText != null) interactionText.SetActive(false);
-        if (rewardCanvas != null) rewardCanvas.SetActive(false);
+        InitializeComponents();
+    }
+
+    void InitializeComponents()
+    {
+        if (interactionText) interactionText.SetActive(false);
+        if (rewardCanvas) rewardCanvas.SetActive(false);
+        if (sword) originalY = sword.transform.position.y;
     }
 
     void OnTriggerEnter(Collider other)
@@ -34,8 +54,7 @@ public class izdizanje_maca : MonoBehaviour
         if (other.gameObject == player && !completed)
         {
             playerInRange = true;
-            // Prikaži tekst kad igrač uđe u trigger
-            if (interactionText != null) interactionText.SetActive(true);
+            ToggleInteractionText(true);
         }
     }
 
@@ -44,53 +63,109 @@ public class izdizanje_maca : MonoBehaviour
         if (other.gameObject == player)
         {
             playerInRange = false;
-            // Sakrij tekst kad igrač izađe
-            if (interactionText != null) interactionText.SetActive(false);
-            // Ako nije završeno, resetiraj
-            if (!completed)
-            {
-                currentClicks = 0;
-            }
+            ToggleInteractionText(false);
+            if (resetClicksOnExit && !completed) currentClicks = 0;
         }
     }
 
     void Update()
     {
+        HandleInput();
+        HandleSwordReset();
+    }
+
+    void HandleInput()
+    {
         if (playerInRange && !completed && Input.GetButtonDown("Use"))
         {
             currentClicks++;
+            lastUseTime = Time.time;
+            StartCoroutine(MoveSword(swordMoveAmount));
+            isSwordUp = true;
 
-            // Pomakni mač gore po Y osi
-            if (sword != null)
-            {
-                Vector3 newPosition = sword.transform.position;
-                newPosition.y += swordMoveAmount;
-                sword.transform.position = newPosition;
-            }
-
-            // Provjeri je li dosegnut potreban broj klikova
             if (currentClicks >= requiredClicks)
             {
                 completed = true;
-                // Sakrij tekst i prikaži canvas
-                if (interactionText != null) interactionText.SetActive(false);
-                if (rewardCanvas != null) rewardCanvas.SetActive(true);
-
-                // Pokreni korutinu za skrivanje canvasa nakon određenog vremena
-                if (rewardCanvas != null)
-                {
-                    StartCoroutine(HideCanvasAfterDelay(canvasDisplayDuration));
-                }
+                ToggleUIElements();
+                StartCoroutine(HideCanvasAndOpenDoor());
             }
         }
     }
 
-    private System.Collections.IEnumerator HideCanvasAfterDelay(float delay)
+    void HandleSwordReset()
     {
-        yield return new WaitForSeconds(delay);
-        if (rewardCanvas != null)
+        if (isSwordUp && (Time.time - lastUseTime) > resetDelay && !completed)
         {
-            rewardCanvas.SetActive(false);
+            StartCoroutine(MoveSwordToY(bottomY));
+            isSwordUp = false;
         }
     }
+
+    void ToggleInteractionText(bool state)
+    {
+        if (interactionText) interactionText.SetActive(state);
+    }
+
+    void ToggleUIElements()
+    {
+        ToggleInteractionText(false);
+        if (rewardCanvas) rewardCanvas.SetActive(true);
+    }
+
+    IEnumerator HideCanvasAndOpenDoor()
+    {
+        yield return new WaitForSeconds(canvasDisplayDuration);
+        if (rewardCanvas) rewardCanvas.SetActive(false);
+        if (doorToOpen) StartCoroutine(RotateDoor());
+    }
+
+    IEnumerator MoveSword(float amount)
+    {
+        Vector3 startPos = sword.transform.position;
+        Vector3 targetPos = startPos + Vector3.up * amount;
+        float elapsedTime = 0f;
+        float duration = 1f / swordMoveSpeed;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            sword.transform.position = Vector3.Lerp(startPos, targetPos, elapsedTime / duration);
+            yield return null;
+        }
+        sword.transform.position = targetPos;
+    }
+
+    IEnumerator MoveSwordToY(float targetY)
+    {
+        Vector3 startPos = sword.transform.position;
+        Vector3 targetPos = new Vector3(startPos.x, targetY, startPos.z);
+        float elapsedTime = 0f;
+        float duration = 1f / swordMoveSpeed;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            sword.transform.position = Vector3.Lerp(startPos, targetPos, elapsedTime / duration);
+            yield return null;
+        }
+        sword.transform.position = targetPos;
+    }
+
+    IEnumerator RotateDoor()
+    {
+        Quaternion startRot = doorToOpen.transform.rotation;
+        Quaternion targetRot = startRot * Quaternion.Euler(0, 0, doorRotationAmount);
+        float elapsedTime = 0f;
+        float duration = 1f / doorRotationSpeed;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            doorToOpen.transform.rotation = Quaternion.Lerp(startRot, targetRot, elapsedTime / duration);
+            yield return null;
+        }
+        // OVO JE KLJUČNO: eksplicitno postavi završnu rotaciju!
+        doorToOpen.transform.rotation = targetRot;
+    }
+
 }
