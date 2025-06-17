@@ -6,7 +6,10 @@ public class HealthManager : MonoBehaviour
     public static HealthManager Instance { get; private set; }
 
     public int maxHealth = 100;
-    public int CurrentHealth { get; private set; }
+
+    [SerializeField]
+    private int currentHealth;
+    public int CurrentHealth => currentHealth;
 
     public UnityEvent<int> OnHealthChanged;
     public UnityEvent OnDeath;
@@ -16,7 +19,13 @@ public class HealthManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            CurrentHealth = maxHealth;
+            currentHealth = maxHealth;
+
+            if (OnHealthChanged == null)
+                OnHealthChanged = new UnityEvent<int>();
+            if (OnDeath == null)
+                OnDeath = new UnityEvent();
+
             DontDestroyOnLoad(gameObject);
         }
         else
@@ -27,16 +36,18 @@ public class HealthManager : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        if (CurrentHealth <= 0) return;
-        CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0, maxHealth);
-        OnHealthChanged?.Invoke(CurrentHealth);
-        if (CurrentHealth <= 0)
+        if (currentHealth <= 0) return;
+
+        currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
+        OnHealthChanged?.Invoke(currentHealth);
+
+        if (currentHealth <= 0)
             OnDeath?.Invoke();
     }
 
     public void ResetHealth()
     {
-        CurrentHealth = maxHealth;
-        OnHealthChanged?.Invoke(CurrentHealth);
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth);
     }
 }
