@@ -4,7 +4,8 @@ using System.Collections;
 public class izdizanje_maca : MonoBehaviour
 {
     [Header("Player Detection")]
-    public GameObject player;
+    public GameObject playerChild1; // Povuci prvo dijete playera
+    public GameObject playerChild2; // Povuci drugo dijete playera
 
     [Header("Mac Movement")]
     public GameObject sword;
@@ -51,7 +52,7 @@ public class izdizanje_maca : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject == player && !completed)
+        if ((other.gameObject == playerChild1 || other.gameObject == playerChild2) && !completed)
         {
             playerInRange = true;
             ToggleInteractionText(true);
@@ -60,7 +61,7 @@ public class izdizanje_maca : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
         {
             playerInRange = false;
             ToggleInteractionText(false);
@@ -164,8 +165,7 @@ public class izdizanje_maca : MonoBehaviour
             doorToOpen.transform.rotation = Quaternion.Lerp(startRot, targetRot, elapsedTime / duration);
             yield return null;
         }
-        // OVO JE KLJUČNO: eksplicitno postavi završnu rotaciju!
+
         doorToOpen.transform.rotation = targetRot;
     }
-
 }

@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 public class bascanska_p_s : MonoBehaviour
 {
     [Header("Reference")]
-    public GameObject player;           // Povuci Player objekt
+    public GameObject playerChild1;     // Povuci prvo dijete playera
+    public GameObject playerChild2;     // Povuci drugo dijete playera
     public GameObject objektZaSpustiti; // Objekt koji će se spuštati
     public GameObject interactionText;  // UI tekst za interakciju
 
@@ -16,14 +18,13 @@ public class bascanska_p_s : MonoBehaviour
 
     void Start()
     {
-        // Sakrij tekst na početku
         if (interactionText != null)
             interactionText.SetActive(false);
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
         {
             playerInRange = true;
             if (!isMoving && interactionText != null)
@@ -33,7 +34,7 @@ public class bascanska_p_s : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
         {
             playerInRange = false;
             if (interactionText != null)
@@ -53,7 +54,7 @@ public class bascanska_p_s : MonoBehaviour
         }
     }
 
-    private System.Collections.IEnumerator SpustiObjektNaY()
+    private IEnumerator SpustiObjektNaY()
     {
         isMoving = true;
         Vector3 startPos = objektZaSpustiti.transform.position;

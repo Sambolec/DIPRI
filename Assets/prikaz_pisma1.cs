@@ -3,9 +3,10 @@ using UnityEngine.UI;
 
 public class prikaz_pisma1 : MonoBehaviour
 {
-    public GameObject player;           // Povuci Player objekt
-    public GameObject interactionText;  // Povuci UI tekst iz Canvasa
-    public GameObject interactionImage; // Povuci UI sliku iz Canvasa
+    public GameObject playerChild1;           // Povuci prvo dijete playera
+    public GameObject playerChild2;           // Povuci drugo dijete playera
+    public GameObject interactionText;        // Povuci UI tekst iz Canvasa
+    public GameObject interactionImage;       // Povuci UI sliku iz Canvasa
 
     private bool playerInRange = false;
     private bool imageShown = false;
@@ -19,7 +20,7 @@ public class prikaz_pisma1 : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
         {
             playerInRange = true;
             // Prikaži samo tekst kad igrač uđe u trigger
@@ -29,7 +30,7 @@ public class prikaz_pisma1 : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
         {
             playerInRange = false;
             // Sakrij sve kad igrač izađe iz trigera

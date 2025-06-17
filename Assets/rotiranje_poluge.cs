@@ -3,8 +3,11 @@ using System.Collections;
 
 public class rotiranje_poluge : MonoBehaviour
 {
-    [Header("Player i UI")]
-    public GameObject player;           // Povuci Player objekt
+    [Header("Player Child Objekti")]
+    public GameObject playerChild1;    // Povuci prvo dijete playera
+    public GameObject playerChild2;    // Povuci drugo dijete playera
+
+    [Header("UI Elementi")]
     public GameObject interactionText;  // Povuci UI tekst za interakciju
 
     [Header("Postavke rotacije")]
@@ -16,17 +19,15 @@ public class rotiranje_poluge : MonoBehaviour
 
     void Start()
     {
-        // Sakrij tekst na početku
         if (interactionText != null)
             interactionText.SetActive(false);
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject == player && !leverActivated)
+        if ((other.gameObject == playerChild1 || other.gameObject == playerChild2) && !leverActivated)
         {
             playerInRange = true;
-            // Prikaži tekst
             if (interactionText != null)
                 interactionText.SetActive(true);
         }
@@ -34,10 +35,9 @@ public class rotiranje_poluge : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
         {
             playerInRange = false;
-            // Sakrij tekst
             if (interactionText != null)
                 interactionText.SetActive(false);
         }
@@ -48,7 +48,6 @@ public class rotiranje_poluge : MonoBehaviour
         if (playerInRange && !leverActivated && Input.GetButtonDown("Use"))
         {
             leverActivated = true;
-            // Sakrij tekst nakon pritiska
             if (interactionText != null)
                 interactionText.SetActive(false);
 

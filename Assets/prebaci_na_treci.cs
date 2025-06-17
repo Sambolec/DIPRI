@@ -3,11 +3,12 @@ using UnityEngine.SceneManagement;
 
 public class prebaci_na_treci : MonoBehaviour
 {
-    public GameObject player; // Povuci Player objekt u Inspectoru
+    public GameObject playerChild1; // Povuci prvo dijete playera
+    public GameObject playerChild2; // Povuci drugo dijete playera
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
         {
             SceneManager.LoadScene("treci_level");
         }
