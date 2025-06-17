@@ -5,8 +5,9 @@ public class triger_u_unutrasnjost : MonoBehaviour
 {
     [Header("Postavke")]
     public GameObject interactionText; // Povuci Text objekt iz Canvasa
-    public GameObject player; // Povuci Player objekt iz Hierarchy
-    public float loadingDelay = 3f; // Vrijeme čekanja u sekundama
+    public GameObject playerChild1;    // Povuci prvo dijete playera
+    public GameObject playerChild2;    // Povuci drugo dijete playera
+    public float loadingDelay = 3f;    // Vrijeme čekanja u sekundama
 
     private bool playerInRange = false;
 
@@ -18,7 +19,7 @@ public class triger_u_unutrasnjost : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
         {
             if (interactionText != null)
                 interactionText.SetActive(true);
@@ -28,7 +29,7 @@ public class triger_u_unutrasnjost : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
         {
             if (interactionText != null)
                 interactionText.SetActive(false);

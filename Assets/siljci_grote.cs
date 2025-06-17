@@ -2,16 +2,19 @@
 
 public class siljci_grote : MonoBehaviour
 {
-    [Header("Kretanje objekta")]
-    public float speed = 1.0f;
-    public float topY = 5.0f;
-    public float bottomY = 0.0f;
-    public float waitAtTop = 1.0f;
-    public float waitAtBottom = 1.0f;
+    [Header("Player Child Objects")]
+    public GameObject playerChild1;   // Povuci prvo dijete playera
+    public GameObject playerChild2;   // Povuci drugo dijete playera
 
-    [Header("Teleportacija igrača")]
-    public Transform targetPosition; // Povuci objekt s ciljnom pozicijom
-    public GameObject player;        // Povuci Player objekt
+    [Header("Kretanje Platforme")]
+    public float speed = 1.0f;        // Brzina kretanja
+    public float topY = 5.0f;         // Gornja granica (Y)
+    public float bottomY = 0.0f;      // Donja granica (Y)
+    public float waitAtTop = 1.0f;    // Pauza na vrhu
+    public float waitAtBottom = 1.0f; // Pauza na dnu
+
+    [Header("Teleportacija")]
+    public Transform targetPosition;  // Povuci spawn/ciljnu poziciju
 
     private bool movingUp = true;
     private bool waiting = false;
@@ -19,7 +22,6 @@ public class siljci_grote : MonoBehaviour
 
     void Update()
     {
-        // Logika za kretanje objekta gore-dolje
         if (waiting)
         {
             waitTimer -= Time.deltaTime;
@@ -59,13 +61,9 @@ public class siljci_grote : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Provjeri je li to igrač i postoje li reference
-        if (other.gameObject == player && targetPosition != null)
+        if ((other.gameObject == playerChild1 || other.gameObject == playerChild2) && targetPosition != null)
         {
-            // Teleportiraj igrača na ciljnu poziciju
-            player.transform.position = targetPosition.position;
-
-            // Ovdje možeš dodati dodatne efekte (npr. zvuk, particle efekte)
+            other.gameObject.transform.position = targetPosition.position;
         }
     }
 }

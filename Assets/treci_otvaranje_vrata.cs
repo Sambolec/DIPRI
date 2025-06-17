@@ -3,11 +3,14 @@ using System.Collections;
 
 public class treci_otvaranje_vrata : MonoBehaviour
 {
-    [Header("Postavke")]
-    public GameObject player;        // Povuci Player objekt
-    public GameObject door;          // Povuci vrata koja se otvaraju
+    [Header("Child Objekti Playera")]
+    public GameObject playerChild1;    // Povuci prvo dijete playera
+    public GameObject playerChild2;    // Povuci drugo dijete playera
+
+    [Header("Postavke Vrata")]
+    public GameObject door;             // Povuci vrata koja se otvaraju
     public float targetZRotation = 90f; // Konačna rotacija u stupnjevima
-    public float rotationSpeed = 2f; // Brzina rotacije (veća vrijednost = brže)
+    public float rotationSpeed = 2f;    // Brzina rotacije
 
     private bool doorOpened = false;
     private Quaternion initialRotation;
@@ -19,7 +22,8 @@ public class treci_otvaranje_vrata : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject == player && !doorOpened)
+        // Provjeri je li sudar s jednim od child objekata
+        if ((other.gameObject == playerChild1 || other.gameObject == playerChild2) && !doorOpened)
         {
             StartCoroutine(RotateDoor());
         }
