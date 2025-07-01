@@ -3,27 +3,29 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
+    public GameObject mainMenuPanel;    
     public GameObject controlsPanel;
 
     public void PlayGame()
     {
-        SceneManager.LoadScene("ispred_crkve"); // zamijeni imenom tvoje igre scene
+        SceneManager.LoadScene("ispred_crkve"); // Zamijeni s točnim imenom tvoje scene
     }
 
     public void ShowControls()
     {
-        controlsPanel.SetActive(true);
+        mainMenuPanel.SetActive(false);       // Sakrij glavni meni
+        controlsPanel.SetActive(true);        // Prikaži kontrole
     }
 
     public void HideControls()
     {
-        controlsPanel.SetActive(false);
+        controlsPanel.SetActive(false);       // Sakrij kontrole
+        mainMenuPanel.SetActive(true);        // Vrati glavni meni
     }
 
     public void ExitGame()
     {
         Debug.Log("Exit game");
-        Application.Quit();
+        Application.Quit(); // Radi samo u buildanoj igri (ne unutar Editora)
     }
 }
-
