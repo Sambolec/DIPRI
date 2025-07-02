@@ -1,16 +1,26 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 public class propadne_dole : MonoBehaviour
 {
-    public GameObject playerChild1;   // Povuci prvo dijete playera u Inspectoru
-    public GameObject playerChild2;   // Povuci drugo dijete playera u Inspectoru
-    public Transform spawnPoint;      // Povuci spawn point u Inspectoru
+    [Header("Dijelovi karaktera")]
+    public List<Transform> playerParts; // Dodaj sve dijelove karaktera ovdje u Inspectoru
 
-    private void OnTriggerEnter(Collider other)
+    [Header("Spawn point")]
+    public Transform spawnPoint; // Odredi gdje se karakter vraća
+
+    void OnTriggerStay(Collider other)
     {
-        if ((other.gameObject == playerChild1 || other.gameObject == playerChild2) && spawnPoint != null)
+        foreach (var part in playerParts)
         {
-            other.gameObject.transform.position = spawnPoint.position;
+            if (other.transform == part)
+            {
+                foreach (var p in playerParts)
+                {
+                    p.position = spawnPoint.position;
+                }
+                break;
+            }
         }
     }
 }

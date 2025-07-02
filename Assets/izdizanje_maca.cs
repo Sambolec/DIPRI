@@ -88,7 +88,7 @@ public class izdizanje_maca : MonoBehaviour
             {
                 completed = true;
                 ToggleUIElements();
-                StartCoroutine(HideCanvasAndOpenDoor());
+                StartCoroutine(HideCanvasOpenDoorAndHideSword()); // UMJESTO stare korutine
             }
         }
     }
@@ -111,13 +111,16 @@ public class izdizanje_maca : MonoBehaviour
     {
         ToggleInteractionText(false);
         if (rewardCanvas) rewardCanvas.SetActive(true);
+        // NE gasimo mač ovdje!
     }
 
-    IEnumerator HideCanvasAndOpenDoor()
+    // NOVA KORUTINA: prvo sakrije canvas, otvori vrata, TEK ONDA gasi mač
+    IEnumerator HideCanvasOpenDoorAndHideSword()
     {
         yield return new WaitForSeconds(canvasDisplayDuration);
         if (rewardCanvas) rewardCanvas.SetActive(false);
-        if (doorToOpen) StartCoroutine(RotateDoor());
+        if (doorToOpen) yield return StartCoroutine(RotateDoor());
+        if (sword) sword.SetActive(false); // Mač nestaje TEK SAD, kad je sve gotovo
     }
 
     IEnumerator MoveSword(float amount)
