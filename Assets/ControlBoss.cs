@@ -1,58 +1,157 @@
 using UnityEngine;
 using UnityEngine.AI;
+using System.Collections;
 
-public class BossController : MonoBehaviour
+public class ControlBoss : MonoBehaviour
 {
-    public float attackRange = 4f;
-    public float attackCooldown = 1.5f;
-    public int attackDamage = 30;
-    public BossWeaponDamage weaponDamage; // Assign in Inspector
+    [Header("Targets")]
+    public Transform[] players = new Transform[2];
 
-    private Transform player;
+    [Header("Detection")]
+    public float sightRange = 10f;
+    public float attackRange = 2f;
+    public LayerMask whatIsPlayer;
+
+    [Header("Combat")]
+    public int attackDamage = 25;
+    public float attackCooldown = 1.5f;
+
+    [Header("Patrol")]
+    public Transform[] patrolPoints;
+    public float patrolSpeed = 2f;
+    public float chaseSpeed = 4f;
+
     private NavMeshAgent agent;
     private Animator animator;
-    private float attackTimer = 0f;
-    private bool isDead = false;
+    private float lastAttackTime;
+    private int currentPatrolPoint = 0;
+    private bool isResettingAttack = false;
 
-    void Start()
+    void Awake()
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
     }
 
     void Update()
     {
-        if (isDead || player == null) return;
-
-        agent.SetDestination(player.position);
-
-        bool isMoving = agent.velocity.magnitude > 0.1f && agent.remainingDistance > agent.stoppingDistance;
-        animator.SetBool("IsMoving", isMoving);
-
-        Vector3 direction = (player.position - transform.position).normalized;
-        direction.y = 0;
-        if (direction.magnitude > 0.01f)
+        Transform targetPlayer = GetClosestPlayer();
+        if (targetPlayer == null)
         {
-            Quaternion lookRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 10f);
+            Patrol();
+            return;
         }
 
-        float distance = Vector3.Distance(transform.position, player.position);
-        attackTimer += Time.deltaTime;
-        if (distance <= attackRange && attackTimer >= attackCooldown)
+        bool playerInSight = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
+        bool playerInAttack = Vector3.Distance(transform.position, targetPlayer.position) <= attackRange;
+
+        if (playerInAttack && playerInSight)
         {
-            animator.SetTrigger("Attack");
-            attackTimer = 0f;
-            // Optionally: StartCoroutine(AttackSequence());
+            AttackPlayer(targetPlayer);
+        }
+        else if (playerInSight)
+        {
+            ChasePlayer(targetPlayer);
+        }
+        else
+        {
+            Patrol();
         }
     }
 
-    public void Die()
+    Transform GetClosestPlayer()
     {
-        isDead = true;
+        Transform closest = null;
+        float minDist = Mathf.Infinity;
+        foreach (Transform t in players)
+        {
+            if (t == null) continue;
+            float dist = Vector3.Distance(transform.position, t.position);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closest = t;
+            }
+        }
+        return closest;
+    }
+
+    void Patrol()
+    {
+        if (animator != null)
+        {
+            animator.SetBool("isWalking", true);
+            animator.SetBool("isRunning", false);
+            animator.SetBool("isAttacking", false);
+        }
+
+        if (patrolPoints == null || patrolPoints.Length == 0)
+        {
+            agent.isStopped = true;
+            if (animator != null) animator.SetBool("isWalking", false);
+            return;
+        }
+
+        agent.speed = patrolSpeed;
+        agent.isStopped = false;
+
+        if (!agent.pathPending && agent.remainingDistance < 0.5f)
+        {
+            currentPatrolPoint = (currentPatrolPoint + 1) % patrolPoints.Length;
+            agent.SetDestination(patrolPoints[currentPatrolPoint].position);
+        }
+        else if (agent.destination != patrolPoints[currentPatrolPoint].position)
+        {
+            agent.SetDestination(patrolPoints[currentPatrolPoint].position);
+        }
+    }
+
+    void ChasePlayer(Transform target)
+    {
+        if (animator != null)
+        {
+            animator.SetBool("isWalking", false);
+            animator.SetBool("isRunning", true);
+            animator.SetBool("isAttacking", false);
+        }
+
+        agent.speed = chaseSpeed;
+        agent.isStopped = false;
+        agent.SetDestination(target.position);
+    }
+
+    void AttackPlayer(Transform target)
+    {
         agent.isStopped = true;
-        animator.SetBool("IsMoving", false);
-        animator.SetTrigger("Die");
+        if (animator != null)
+        {
+            animator.SetBool("isWalking", false);
+            animator.SetBool("isRunning", false);
+        }
+
+        if (!isResettingAttack && Time.time - lastAttackTime >= attackCooldown)
+        {
+            if (animator != null)
+                animator.SetBool("isAttacking", true);
+
+            // Damage only if player has Health script
+            var health = target.GetComponent<Health>();
+            if (health != null)
+            {
+                health.TakeDamage(attackDamage);
+                Debug.Log($"Dealt {attackDamage} damage to {target.name}!");
+            }
+            lastAttackTime = Time.time;
+            StartCoroutine(ResetAttackState());
+        }
+    }
+
+    IEnumerator ResetAttackState()
+    {
+        isResettingAttack = true;
+        yield return new WaitForSeconds(attackCooldown * 0.8f);
+        if (animator != null)
+            animator.SetBool("isAttacking", false);
+        isResettingAttack = false;
     }
 }
