@@ -1,116 +1,69 @@
 ﻿using UnityEngine;
 using TMPro;
+using System.Collections;
 
 public class ulazak_sa_krunom : MonoBehaviour
 {
-    [Header("Player References")]
-    public GameObject playerChild1;
-    public GameObject playerChild2;
+    [Header("UI")]
+    public TMP_Text infoText1; // Povuci prvi TMP tekst iz canvasa
+    public TMP_Text infoText2; // Povuci drugi TMP tekst iz canvasa
 
-    [Header("UI References")]
-    public Canvas infoCanvas;              // Cijeli canvas koji se prikazuje prvi
-    public TextMeshProUGUI infoText;       // Tekst koji se prikazuje kasnije
+    [Header("Vrata")]
+    public Transform vrataTransform; // Povuci vrata (transform)
+    public Vector3 pocetnaRotacija;  // Početna Euler rotacija vrata
+    public Vector3 zavrsnaRotacija;  // Završna Euler rotacija vrata
+    public float trajanjeOtvaranja = 1.5f;
 
-    [Header("Tekst")]
-    public string drugiTekst = "Stisni U za otvaranje vrata";
+    [Header("Players")]
+    public Transform[] players = new Transform[2]; // Povuci svoja 2 playera (childa ili bilo gdje u sceni)
 
-    [Header("Door Settings")]
-    public Transform doorTransform;
-    public Vector3 startRotation;
-    public Vector3 endRotation;
-    public float openSpeed = 2f;
-
-    private bool playerInZone = false;
-    private int interactionStep = 0;
-    private bool doorOpened = false;
+    private int stanje = 0; // 0 - ništa, 1 - prvi tekst, 2 - drugi tekst, 3 - otvaranje vrata
+    private bool vrataOtvorena = false;
 
     void Start()
     {
-        if (infoCanvas != null)
-            infoCanvas.gameObject.SetActive(false);
-
-        if (infoText != null)
-            infoText.gameObject.SetActive(false);
-
-        if (doorTransform != null)
-            doorTransform.localEulerAngles = startRotation;
+        if (infoText1 != null) infoText1.gameObject.SetActive(false);
+        if (infoText2 != null) infoText2.gameObject.SetActive(false);
+        if (vrataTransform != null)
+            vrataTransform.localEulerAngles = pocetnaRotacija;
     }
 
     void Update()
     {
-        if (playerInZone && !doorOpened)
+        if (Input.GetKeyDown(KeyCode.U))
         {
-            if (Input.GetKeyDown(KeyCode.U))
+            stanje++;
+            if (stanje == 1)
             {
-                if (interactionStep == 0)
-                {
-                    // Prvi klik: makni canvas
-                    if (infoCanvas != null)
-                        infoCanvas.gameObject.SetActive(false);
-                    interactionStep = 1;
-                }
-                else if (interactionStep == 1)
-                {
-                    // Drugi klik: prikaži tekst
-                    if (infoText != null)
-                    {
-                        infoText.text = drugiTekst;
-                        infoText.gameObject.SetActive(true);
-                    }
-                    interactionStep = 2;
-                }
-                else if (interactionStep == 2)
-                {
-                    // Treći klik: makni tekst i otvori vrata
-                    if (infoText != null)
-                        infoText.gameObject.SetActive(false);
-                    StartCoroutine(OpenDoor());
-                    interactionStep = 3;
-                }
+                if (infoText1 != null) infoText1.gameObject.SetActive(true);
+                if (infoText2 != null) infoText2.gameObject.SetActive(false);
+            }
+            else if (stanje == 2)
+            {
+                if (infoText1 != null) infoText1.gameObject.SetActive(false);
+                if (infoText2 != null) infoText2.gameObject.SetActive(true);
+            }
+            else if (stanje == 3 && !vrataOtvorena)
+            {
+                if (infoText1 != null) infoText1.gameObject.SetActive(false);
+                if (infoText2 != null) infoText2.gameObject.SetActive(false);
+                StartCoroutine(OtvoriVrata());
             }
         }
     }
 
-    System.Collections.IEnumerator OpenDoor()
+    IEnumerator OtvoriVrata()
     {
-        Quaternion startRot = Quaternion.Euler(startRotation);
-        Quaternion endRot = Quaternion.Euler(endRotation);
+        vrataOtvorena = true;
+        Quaternion pocetak = Quaternion.Euler(pocetnaRotacija);
+        Quaternion kraj = Quaternion.Euler(zavrsnaRotacija);
         float t = 0f;
         while (t < 1f)
         {
-            t += Time.deltaTime * openSpeed;
-            doorTransform.localRotation = Quaternion.Slerp(startRot, endRot, t);
+            t += Time.deltaTime / trajanjeOtvaranja;
+            vrataTransform.localRotation = Quaternion.Lerp(pocetak, kraj, t);
             yield return null;
         }
-        doorTransform.localRotation = endRot;
-        doorOpened = true;
-    }
-
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
-        {
-            playerInZone = true;
-            if (!doorOpened)
-            {
-                if (infoCanvas != null)
-                    infoCanvas.gameObject.SetActive(true);
-                if (infoText != null)
-                    infoText.gameObject.SetActive(false);
-                interactionStep = 0;
-            }
-        }
-    }
-
-    void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject == playerChild1 || other.gameObject == playerChild2)
-        {
-            playerInZone = false;
-            if (infoCanvas != null)
-                infoCanvas.gameObject.SetActive(false);
-            if (infoText != null)
-                infoText.gameObject.SetActive(false);
-        }
+        vrataTransform.localRotation = kraj;
     }
 }

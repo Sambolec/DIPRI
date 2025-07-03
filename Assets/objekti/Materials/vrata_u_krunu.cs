@@ -4,7 +4,7 @@ using TMPro;
 public class vrata_u_krunu : MonoBehaviour
 {
     [Header("Reference")]
-    public GameObject player;         // Player objekt (povuci u Inspector)
+    public GameObject[] players;      // Povuci sve player objekte u Inspector
     public TMP_Text messageText;      // TMP_Text za poruku (povuci iz Canvasa)
     public Transform vrata;           // Transform vrata (povuci vrata objekt)
 
@@ -20,9 +20,9 @@ public class vrata_u_krunu : MonoBehaviour
     [Header("Input")]
     public string useInputName = "Use"; // Naziv tipke iz Input Managera
 
-    private bool playerUTriggeru = false;
     private bool vrataOtvorena = false;
     private bool otvaranjeUTijeku = false;
+    private GameObject playerUTriggeru = null;
 
     private void Start()
     {
@@ -34,30 +34,39 @@ public class vrata_u_krunu : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject == player && !vrataOtvorena)
+        foreach (var p in players)
         {
-            playerUTriggeru = true;
-            if (messageText != null)
+            if (other.gameObject == p && !vrataOtvorena)
             {
-                messageText.text = tekstPoruke;
-                messageText.gameObject.SetActive(true);
+                playerUTriggeru = p;
+                if (messageText != null)
+                {
+                    messageText.text = tekstPoruke;
+                    messageText.gameObject.SetActive(true);
+                }
+                break;
             }
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.gameObject == player)
+        foreach (var p in players)
         {
-            playerUTriggeru = false;
-            if (messageText != null)
-                messageText.gameObject.SetActive(false);
+            if (other.gameObject == p)
+            {
+                if (playerUTriggeru == p)
+                    playerUTriggeru = null;
+                if (messageText != null)
+                    messageText.gameObject.SetActive(false);
+                break;
+            }
         }
     }
 
     private void Update()
     {
-        if (playerUTriggeru && !vrataOtvorena && !otvaranjeUTijeku)
+        if (playerUTriggeru != null && !vrataOtvorena && !otvaranjeUTijeku)
         {
             if (Input.GetButtonDown(useInputName))
             {
