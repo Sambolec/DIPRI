@@ -6,25 +6,30 @@ using TMPro;
 public class krstionica_napad : MonoBehaviour
 {
     [Header("UI")]
-    public TMP_Text infoText;            // UI Text (npr. "Pritisni E za interakciju")
-    public Canvas infoCanvas;        // Canvas koji se prikazuje na 'Use'
-    public float canvasDuration = 3f; // Koliko sekundi će canvas biti prikazan
-
-    [Header("Enemy Spawning")]
-    public GameObject enemyPrefab;   // Prefab neprijatelja
-    public Transform[] spawnPoints;  // Gdje će se neprijatelji pojaviti
+    public TMP_Text infoText;
+    public Canvas infoCanvas;
+    public float canvasDuration = 3f;
 
     [Header("Input")]
-    public string useButton = "Use"; // Naziv tipke iz Input Settingsa
+    public string useButton = "Use";
+
+    [Header("Aktiviraj ove objekte nakon 3 klika")]
+    public GameObject objekt1;   // Povuci ovdje prvi objekt (u sceni, isključen)
+    public GameObject objekt2;   // Povuci ovdje drugi objekt (u sceni, isključen)
 
     private bool playerInZone = false;
     private bool canInteract = true;
-    private bool enemiesSpawned = false;
+    private int uranjanja = 0;
+    private bool objektiAktivirani = false;
 
     void Start()
     {
         infoText.gameObject.SetActive(false);
         infoCanvas.gameObject.SetActive(false);
+
+        // Po želji, možeš ih ovdje automatski isključiti na početku:
+        // if (objekt1 != null) objekt1.SetActive(false);
+        // if (objekt2 != null) objekt2.SetActive(false);
     }
 
     void OnTriggerEnter(Collider other)
@@ -47,13 +52,13 @@ public class krstionica_napad : MonoBehaviour
 
     void Update()
     {
-        if (playerInZone && canInteract && Input.GetButtonDown(useButton))
+        if (playerInZone && canInteract && Input.GetButtonDown(useButton) && !objektiAktivirani)
         {
-            StartCoroutine(ShowCanvasAndSpawnEnemies());
+            StartCoroutine(ShowCanvasAndCountUrone());
         }
     }
 
-    IEnumerator ShowCanvasAndSpawnEnemies()
+    IEnumerator ShowCanvasAndCountUrone()
     {
         canInteract = false;
         infoText.gameObject.SetActive(false);
@@ -63,18 +68,22 @@ public class krstionica_napad : MonoBehaviour
 
         infoCanvas.gameObject.SetActive(false);
 
-        if (!enemiesSpawned)
+        uranjanja++;
+
+        if (uranjanja >= 3 && !objektiAktivirani)
         {
-            SpawnEnemies();
-            enemiesSpawned = true;
+            AktivirajObjekte();
+            objektiAktivirani = true;
+        }
+        else
+        {
+            canInteract = true;
         }
     }
 
-    void SpawnEnemies()
+    void AktivirajObjekte()
     {
-        foreach (Transform spawnPoint in spawnPoints)
-        {
-            Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
-        }
+        if (objekt1 != null) objekt1.SetActive(true);
+        if (objekt2 != null) objekt2.SetActive(true);
     }
 }
